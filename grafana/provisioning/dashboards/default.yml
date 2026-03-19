@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: solar-dashboards
+    orgId: 1
+    folder: Solar Forecasting
+    type: file
+    allowUiUpdates: true
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards

@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+  color: #e5edf7;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 26%),
+    radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.1), transparent 24%),
+    linear-gradient(180deg, #09111f 0%, #06101b 40%, #040b14 100%);
+  color-scheme: dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: #040b14;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.08), transparent 22%),
+    linear-gradient(180deg, #07111f 0%, #050d17 55%, #030912 100%);
+  color: #e5edf7;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.dashboard-shell {
+  animation: dashboard-fade 420ms ease-out;
+}
+
+.dashboard-panel {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(8, 15, 26, 0.94));
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  box-shadow:
+    0 16px 48px rgba(2, 6, 23, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+}
+
+.grafana-screen {
+  background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.08), transparent 18%),
+    radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.06), transparent 16%),
+    #050b14;
+}
+
+.floating-chip {
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(2, 6, 23, 0.68);
+  box-shadow: 0 18px 44px rgba(2, 6, 23, 0.34);
+  backdrop-filter: blur(16px);
+}
+
+.map-wrap .leaflet-container {
+  background: #06101a;
+}
+
+.leaflet-control-zoom a {
+  background: rgba(15, 23, 42, 0.88);
+  color: #e2e8f0;
+  border-bottom-color: rgba(148, 163, 184, 0.2);
+}
+
+.leaflet-control-zoom a:hover {
+  background: rgba(30, 41, 59, 0.94);
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.leaflet-tooltip {
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.38);
+  color: #e2e8f0;
+}
+
+.leaflet-tooltip-top:before {
+  border-top-color: rgba(15, 23, 42, 0.96);
+}
+
+@keyframes dashboard-fade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .map-wrap .leaflet-container {
+    height: 520px !important;
+  }
+}
