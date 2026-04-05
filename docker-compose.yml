@@ -1,26 +1,28 @@
 services:
   timescaledb:
-    image: timescale/timescaledb:2.17.2-pg16
-    container_name: solar_timescaledb
+    image: postgres:16
+    container_name: solar_timescaledb_v2
     environment:
       POSTGRES_DB: solar
       POSTGRES_USER: solar
       POSTGRES_PASSWORD: solar123
     ports:
-      - "5432:5432"
+      - "5445:5432"
     volumes:
-      - timescaledb_data:/var/lib/postgresql/data
+      - timescaledb_data_v2:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U solar -d solar"]
       interval: 10s
       timeout: 5s
       retries: 10
+    networks:
+      - solar_network_v2
 
   grafana:
-    image: grafana/grafana:11.1.0
-    container_name: solar_grafana
+    image: grafana/grafana:11.4.0
+    container_name: solar_grafana_v2
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
@@ -37,11 +39,18 @@ services:
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning
       - ./grafana/dashboards:/var/lib/grafana/dashboards
-      - grafana_data:/var/lib/grafana
+      - grafana_data_v2:/var/lib/grafana
     depends_on:
       timescaledb:
         condition: service_healthy
+    networks:
+      - solar_network_v2
 
 volumes:
-  timescaledb_data:
-  grafana_data:
+  timescaledb_data_v2:
+  grafana_data_v2:
+
+networks:
+  solar_network_v2:
+    name: solar_network_v2
+    driver: bridge

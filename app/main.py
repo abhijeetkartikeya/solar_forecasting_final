@@ -141,3 +141,42 @@ def seed_default_sites(hours: int = Query(240, ge=24, le=24 * 90)) -> dict[str, 
 
     LOGGER.info("Seeded %s demo rows across default plants", total)
     return {"deleted": deleted_total, "seeded": total, "sites": len(default_sites), "hours": hours}
+
+
+# --- NEW FORECASTING ENDPOINTS TO USE V2 PIPELINE DATA ---
+
+from ml.services.solar_forecast import generate_solar_prediction_frame
+
+@app.post("/api/forecast/sync-v2")
+def sync_v2_forecast(
+    lat: float = Query(..., alias="lat"),
+    lon: float = Query(..., alias="lon")
+) -> dict[str, Any]:
+    """Sync real 3-day weather from V2, predict solar output, and cache locally."""
+    deleted = timescaledb_service.delete_predictions(latitude=lat, longitude=lon)
+    frame = generate_solar_prediction_frame(latitude=lat, longitude=lon)
+    inserted = timescaledb_service.upsert_predictions(frame) if not frame.empty else 0
+    return {"deleted": deleted, "upserted": inserted, "lat": lat, "lon": lon}
+
+
+@app.post("/api/forecast/sync-v2-defaults")
+def sync_v2_default_sites() -> dict[str, Any]:
+    """Seed the default frontend plant coordinates cleanly drawing 3 days ahead from V2."""
+    default_sites = [
+        (22.25, 72.74),
+        (13.32, 78.66),
+        (28.61, 77.23),
+        (27.81, 71.40),
+        (14.16, 77.18),
+        (24.54, 81.36),
+        (23.94, 72.41),
+    ]
+    total = 0
+    deleted_total = 0
+    for latitude, longitude in default_sites:
+        deleted_total += timescaledb_service.delete_predictions(latitude=latitude, longitude=longitude)
+        frame = generate_solar_prediction_frame(latitude=latitude, longitude=longitude)
+        total += timescaledb_service.upsert_predictions(frame) if not frame.empty else 0
+
+    LOGGER.info("Synced %s 3-day future solar rows across default plants from V2", total)
+    return {"deleted": deleted_total, "upserted": total, "sites": len(default_sites)}
