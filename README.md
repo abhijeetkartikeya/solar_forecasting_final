@@ -1,25 +1,70 @@
-# Tata Power Solar Monitoring Gateway
+# Solar Forecasting Gateway
 
-This repo now includes the whole local stack:
+A full-stack solar energy monitoring and forecasting platform built for Tata Power solar assets across India. Features an interactive map-based React frontend, a FastAPI backend with ML-driven solar power predictions, TimescaleDB for time-series storage, and Grafana dashboards for real-time visualization.
 
-- React frontend with the India solar asset map
-- direct same-tab redirect from plant click to Grafana
-- FastAPI backend for forecast persistence and demo seeding
-- TimescaleDB storage for `solar_power_predictions`
-- Grafana datasource + starter dashboard provisioning
+## Features
 
-There is no in-app dashboard wrapper anymore. Clicking a site sends the browser directly to Grafana.
+- **Interactive India Solar Map** - Click any solar plant on the Leaflet map to instantly view its forecast dashboard in Grafana
+- **3-Day Solar Power Forecasting** - ML pipeline predicts solar output using weather variables (GHI, cloud cover, temperature, wind speed)
+- **Dual Data Pipeline** - Demo seeding for development + real V2 weather integration for production forecasts
+- **TimescaleDB Storage** - Optimized time-series storage for predictions with upsert support
+- **Grafana Dashboards** - Auto-provisioned dashboards with site-specific variables (lat/lon, time window)
+- **Docker Compose Stack** - One-command deployment of the full infrastructure
 
-## Frontend
+## Tech Stack
 
-```bash
-npm install
-npm run dev
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 19, Vite 8, Leaflet, ECharts, Tailwind CSS |
+| Backend | FastAPI, Uvicorn, Pandas |
+| Database | TimescaleDB (PostgreSQL) |
+| Visualization | Grafana |
+| ML | Physics-informed solar model with weather-driven predictions |
+| Deployment | Docker Compose, PM2 (ecosystem.config.cjs) |
+
+## Architecture
+
+```
+                    +------------------+
+                    |  React Frontend  |
+                    |  (Vite + Leaflet)|
+                    +--------+---------+
+                             |
+                    Click plant marker
+                             |
+                             v
+                    +------------------+        +------------------+
+                    |   Grafana        |<-------| TimescaleDB      |
+                    |   Dashboards     |        | solar_power_     |
+                    +------------------+        | predictions      |
+                             ^                  +--------+---------+
+                             |                           ^
+                    +--------+---------+                 |
+                    |   FastAPI API    +-----------------+
+                    |   /api/forecast  |
+                    |   /api/predict   |
+                    +--------+---------+
+                             ^
+                    +--------+---------+
+                    | V2 Weather Data  |
+                    | (Open-Meteo +    |
+                    |  NASA POWER)     |
+                    +------------------+
 ```
 
-Vite will run on `http://127.0.0.1:5173` or the next open port.
+## Quick Start
 
-## Backend
+### 1. Start Infrastructure
+
+```bash
+docker compose up -d
+```
+
+This launches:
+- **TimescaleDB** on `localhost:5432`
+- **Grafana** on `localhost:3000` (admin/admin)
+
+### 2. Start the Backend
 
 ```bash
 python3 -m venv .venv
@@ -28,99 +73,76 @@ pip install -r requirements-backend.txt
 uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-API endpoints:
-
-- `GET /api/health`
-- `GET /api/predictions?lat=22.25&lon=72.74&hours=240`
-- `POST /api/predictions/upsert`
-- `POST /api/demo/seed?lat=22.25&lon=72.74&hours=240`
-- `POST /api/demo/seed-defaults?hours=240`
-
-## Docker Stack
-
-Start TimescaleDB and Grafana:
-
-```bash
-docker compose up -d
-```
-
-Services:
-
-- Grafana: `http://127.0.0.1:3000`
-- TimescaleDB: `127.0.0.1:5432`
-
-Default Grafana login:
-
-- user: `admin`
-- password: `admin`
-
-Grafana is provisioned with:
-
-- datasource: `TimescaleDB`
-- dashboard UID: `solar-energy-forecast`
-- dashboard path: `/d/solar-energy-forecast/solar-energy-forecast`
-- dashboard variables: `lat`, `lon`, `window`
-
-## Quick Start End To End
-
-1. Start Docker:
-
-```bash
-docker compose up -d
-```
-
-2. Start the backend:
-
-```bash
-source .venv/bin/activate
-uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
-```
-
-3. Seed demo data:
+### 3. Seed Demo Data
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/api/demo/seed-defaults?hours=240"
 ```
 
-4. Start the frontend:
+### 4. Start the Frontend
 
 ```bash
+npm install
 npm run dev
 ```
 
-5. Open the frontend and click a map marker. It will redirect directly to the Grafana dashboard for that plant.
+### 5. Open & Explore
+
+Open `http://localhost:5173`, click any solar plant marker on the map - it redirects directly to the Grafana dashboard for that plant.
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/health` | API + database health check |
+| `GET` | `/api/predictions?lat=&lon=&hours=` | Fetch predictions for a plant |
+| `POST` | `/api/predictions/upsert` | Batch upsert forecast rows |
+| `POST` | `/api/demo/seed?lat=&lon=&hours=` | Generate synthetic data for one site |
+| `POST` | `/api/demo/seed-defaults?hours=` | Seed all default plant locations |
+| `POST` | `/api/forecast/sync-v2?lat=&lon=` | Sync real weather + predict solar output |
+| `POST` | `/api/forecast/sync-v2-defaults` | Sync all default sites from V2 pipeline |
+
+## Project Structure
+
+```
+.
+├── src/                          # React frontend
+│   ├── App.jsx                   # Map + Grafana redirect logic
+│   └── assets/
+├── app/
+│   └── main.py                   # FastAPI application
+├── ml/
+│   ├── services/
+│   │   ├── solar_forecast.py     # V2 weather-driven solar prediction
+│   │   └── demo_seed.py          # Synthetic data generator
+│   ├── storage/
+│   │   └── timescaledb.py        # TimescaleDB persistence layer
+│   └── utils/
+│       └── config.py             # Settings management
+├── grafana/
+│   ├── dashboards/               # Provisioned Grafana dashboards
+│   └── provisioning/             # Datasource + dashboard provisioning
+├── v2_data_integration.py        # Weather data fetcher (Open-Meteo + NASA)
+├── docker-compose.yml            # TimescaleDB + Grafana stack
+├── ecosystem.config.cjs          # PM2 process manager config
+├── requirements-backend.txt      # Python dependencies
+├── package.json                  # Node.js dependencies
+└── .env.example                  # Environment variable template
+```
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` if you want to override defaults.
+Copy `.env.example` to `.env` to configure:
 
-Frontend:
-
+**Frontend:**
 ```env
 VITE_GRAFANA_URL=http://127.0.0.1:3000
 VITE_GRAFANA_DASHBOARD_PATH=/d/solar-energy-forecast/solar-energy-forecast
-VITE_GRAFANA_ORG_ID=1
-VITE_GRAFANA_THEME=dark
-VITE_GRAFANA_KIOSK_MODE=tv
-VITE_GRAFANA_REFRESH=30s
 VITE_GRAFANA_WINDOW_HOURS=240
 VITE_GRAFANA_FUTURE_HOURS=72
 ```
 
-The frontend redirect sends these Grafana query params:
-
-- `var-lat`
-- `var-lon`
-- `var-window`
-- optional context vars like `var-plant`, `var-region`, `var-capacity`, `var-status`
-
-It also forces the dashboard time range in the URL so Grafana opens on a predictable horizon instead of reusing the last browser-selected range:
-
-- `from=now-${VITE_GRAFANA_WINDOW_HOURS}h`
-- `to=now+${VITE_GRAFANA_FUTURE_HOURS}h`
-
-Backend:
-
+**Backend:**
 ```env
 POSTGRES_DSN=postgresql://solar:solar123@127.0.0.1:5432/solar
 API_HOST=127.0.0.1
@@ -128,23 +150,20 @@ API_PORT=8000
 CORS_ORIGINS=http://127.0.0.1:5173,http://127.0.0.1:5174
 ```
 
-Grafana datasource overrides:
+## Default Solar Plant Sites
 
-```env
-GRAFANA_POSTGRES_URL=timescaledb:5432
-GRAFANA_POSTGRES_USER=solar
-GRAFANA_POSTGRES_PASSWORD=solar123
-GRAFANA_POSTGRES_DB=solar
-```
+The system comes pre-configured with 7 solar plant locations across India:
 
-Use those only if Grafana needs to point at an existing Postgres or TimescaleDB instance instead of the local `timescaledb` service. For example, the currently running Grafana container is attached to the existing host database via `host.docker.internal:55432`.
+| Latitude | Longitude | Region |
+|----------|-----------|--------|
+| 22.25 | 72.74 | Gujarat |
+| 13.32 | 78.66 | Andhra Pradesh |
+| 28.61 | 77.23 | Delhi NCR |
+| 27.81 | 71.40 | Rajasthan |
+| 14.16 | 77.18 | Karnataka |
+| 24.54 | 81.36 | Madhya Pradesh |
+| 23.94 | 72.41 | Gujarat |
 
-## Key Files
+## License
 
-- `src/App.jsx`: direct Grafana redirect from map/list clicks
-- `app/main.py`: FastAPI API
-- `ml/storage/timescaledb.py`: TimescaleDB persistence
-- `ml/services/demo_seed.py`: synthetic dashboard seed data
-- `grafana/dashboards/solar-energy-forecast.json`: starter Grafana dashboard
-- `docker-compose.yml`: local Grafana + TimescaleDB stack
-# solar_forecasting_final
+This project is proprietary. All rights reserved.
